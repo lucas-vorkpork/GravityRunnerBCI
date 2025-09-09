@@ -4,7 +4,7 @@ __pycache__/
 *$py.class
 
 # Data
-*.csv
+#*.csv
 *.h5
 
 # Environments
