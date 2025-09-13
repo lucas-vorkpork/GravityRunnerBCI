@@ -1,4 +1,5 @@
 import pygame
+import math
 import random
 import sys
 
@@ -63,6 +64,40 @@ class GameState:
         self.game_speed = GAME_SPEED_INITIAL
         self.obstacle_frequency = OBSTACLE_FREQUENCY_INITIAL
         self.last_obstacle_time = 0
+
+# class StartScreen:
+#     def __init__(self, screen):
+#         self.screen = screen
+    
+#     def draw(self):
+#         pygame.draw.rect(self.screen, BLUE, (0, 0, SCREEN_WIDTH, SCREEN_HEIGHT))
+    
+# Background class
+class Background:
+    def __init__ (self, screen):
+        self.screen = screen
+        self.background_img = pygame.image.load("ui/assets/temp_bg.jpg").convert()
+        self.bg_width = self.background_img.get_width()
+        self.background_img = pygame.transform.scale(self.background_img, (self.bg_width, SCREEN_HEIGHT))
+        
+
+        self.scroll_speed = GAME_SPEED_INITIAL
+        self.min_x = 0
+
+    def draw(self):
+        # Fills screen with the background image
+        tiles = math.ceil(SCREEN_WIDTH/self.bg_width) + 1
+        for i in range(tiles):
+            self.screen.blit(self.background_img, (i*self.bg_width + self.min_x, 0))
+
+
+    def update(self, new_speed):
+        self.scroll_speed = new_speed
+        #adjsut x-offset for leftmost tile
+        self.min_x -= self.scroll_speed 
+        self.draw()
+        if abs(self.min_x) >= self.bg_width:
+            self.min_x = 0
 
 # Player class
 class Player:
@@ -139,6 +174,7 @@ class GameManager:
         
         # Initialize game objects
         self.state = GameState()
+        self.background = Background(self.screen)
         self.player = Player()
         self.obstacles = []
         
@@ -167,7 +203,7 @@ class GameManager:
         """Update game state"""
         if self.state.game_over:
             return
-        
+
         # Update player
         self.player.update()
         
@@ -194,7 +230,10 @@ class GameManager:
         # Adjust obstacle frequency (make obstacles appear more frequently as game progresses)
         self.state.obstacle_frequency = max(OBSTACLE_FREQUENCY_MIN, 
                                           OBSTACLE_FREQUENCY_INITIAL - (self.state.score * 2))
-    
+        
+        # Update background 
+        self.background.update(self.state.game_speed)
+
     def generate_obstacle(self):
         """Generate a new obstacle with randomized distance"""
         is_air_obstacle = random.choice([True, False])
@@ -220,6 +259,11 @@ class GameManager:
         # Clear the screen
         self.screen.fill(BLACK)
         
+        # Draw background
+        self.background.draw()
+
+        
+
         # Draw ground line
         pygame.draw.line(self.screen, WHITE, (0, GROUND_HEIGHT), (SCREEN_WIDTH, GROUND_HEIGHT), 2)
         
