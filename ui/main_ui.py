@@ -60,17 +60,18 @@ class GameState:
     def reset(self):
         """Reset the game state to initial values"""
         self.game_over = False
+        self.has_started = False
         self.score = 0
         self.game_speed = GAME_SPEED_INITIAL
         self.obstacle_frequency = OBSTACLE_FREQUENCY_INITIAL
         self.last_obstacle_time = 0
 
-# class StartScreen:
-#     def __init__(self, screen):
-#         self.screen = screen
+class StartScreen:
+    def __init__(self, screen):
+        self.screen = screen
     
-#     def draw(self):
-#         pygame.draw.rect(self.screen, BLUE, (0, 0, SCREEN_WIDTH, SCREEN_HEIGHT))
+    def draw(self):
+        pygame.draw.rect(self.screen, BLUE, (0, 0, SCREEN_WIDTH, SCREEN_HEIGHT))
     
 # Background class
 class Background:
@@ -79,8 +80,6 @@ class Background:
         self.background_img = pygame.image.load("ui/assets/temp_bg.jpg").convert()
         self.bg_width = self.background_img.get_width()
         self.background_img = pygame.transform.scale(self.background_img, (self.bg_width, SCREEN_HEIGHT))
-        
-
         self.scroll_speed = GAME_SPEED_INITIAL
         self.min_x = 0
 
@@ -194,6 +193,11 @@ class GameManager:
                     sys.exit()
                 elif event.key == pygame.K_SPACE and self.state.game_over:
                     self.reset_game()
+                    self.state.has_started = True
+                elif event.key == pygame.K_SPACE and not self.state.has_started:
+                    self.reset_game()
+                    self.state.has_started = True
+
         
         # Check if spacebar is pressed for gravity control
         keys = pygame.key.get_pressed()
@@ -201,6 +205,8 @@ class GameManager:
     
     def update(self):
         """Update game state"""
+        if not self.state.has_started:
+            return
         if self.state.game_over:
             return
 
@@ -231,7 +237,7 @@ class GameManager:
         self.state.obstacle_frequency = max(OBSTACLE_FREQUENCY_MIN, 
                                           OBSTACLE_FREQUENCY_INITIAL - (self.state.score * 2))
         
-        # Update background 
+        # Update background after game_speed is updated
         self.background.update(self.state.game_speed)
 
     def generate_obstacle(self):
@@ -254,15 +260,16 @@ class GameManager:
             if player_rect.colliderect(obstacle.get_rect()):
                 self.state.game_over = True
     
+
     def draw(self):
         """Draw all game elements to the screen"""
+
+
         # Clear the screen
         self.screen.fill(BLACK)
         
         # Draw background
         self.background.draw()
-
-        
 
         # Draw ground line
         pygame.draw.line(self.screen, WHITE, (0, GROUND_HEIGHT), (SCREEN_WIDTH, GROUND_HEIGHT), 2)
@@ -287,7 +294,11 @@ class GameManager:
             game_over_text = self.font.render("Game Over! Press SPACE to restart", True, WHITE)
             text_rect = game_over_text.get_rect(center=(SCREEN_WIDTH/2, SCREEN_HEIGHT/2))
             self.screen.blit(game_over_text, text_rect)
-        
+
+        if not self.state.has_started:
+            start_text = self.font.render("Press SPACE to start", True, WHITE)
+            text_rect = start_text.get_rect(center=(SCREEN_WIDTH/2, SCREEN_HEIGHT/2))
+            self.screen.blit(start_text, text_rect)        
         # Update the display
         pygame.display.flip()
     
